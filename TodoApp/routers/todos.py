@@ -1,8 +1,8 @@
 from fastapi import APIRouter, Depends, HTTPException, Path, status
 from sqlalchemy.orm import Session
-from ..database import SessionLocal
+from database import SessionLocal
 from typing import Annotated 
-from ..models import Todos
+from models import Todos
 from pydantic import BaseModel, Field
 
 router = APIRouter()
