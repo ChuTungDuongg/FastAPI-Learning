@@ -1,6 +1,5 @@
-from http.client import HTTPException
 from typing import Annotated
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel
 from database import SessionLocal
 from models import Users
@@ -9,7 +8,7 @@ from sqlalchemy.orm import Session
 import starlette.status as status
 from fastapi.security import OAuth2PasswordRequestForm, OAuth2PasswordBearer
 from datetime import timedelta, datetime, timezone
-from jose import jwt
+from jose import JWTError, jwt
 
 router = APIRouter(
     prefix='/auth',
@@ -65,7 +64,7 @@ async def get_current_user(token: Annotated[str, Depends(oath2_bearer)]):
         if username is None or user_id is None:
             raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Could not validate credentials")
         return {'username': username, 'id': user_id}
-    except jwt.JWTError:
+    except JWTError:
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Could not validate credentials")
 
 @router.post("/auth", status_code=status.HTTP_201_CREATED)
@@ -84,10 +83,20 @@ async def create_user(db: db_dependency, create_user_request: CreateUserRequest)
     
 
 @router.post("/token", response_model=Token)
-async def login_for_access_token(form_data: Annotated[OAuth2PasswordRequestForm, Depends()], db: db_dependency):
+async def login_for_access_token(
+    form_data: Annotated[OAuth2PasswordRequestForm, Depends()],
+    db: db_dependency
+):
     user = authenticate_user(form_data.username, form_data.password, db)
+
     if not user:
-        return 'Failed Authentication'
-    
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Failed authentication"
+        )
+
     token = create_access_token(user.username, user.id, timedelta(minutes=30))
-    return {'access_token': token, 'token_type': 'bearer'}
+    return {
+        'access_token': token,
+        'token_type': 'bearer'
+    }
