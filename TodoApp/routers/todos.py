@@ -25,8 +25,8 @@ class TodoRequest(BaseModel):
     completed: bool
         
 @router.get("/")
-async def read_all(db: db_dependency):
-    return db.query(Todos).all()
+async def read_all(user: user_dependency, db: db_dependency):
+    return db.query(Todos).filter(Todos.owner_id == user.get('id')).all()
 
 @router.get("/todo/{todo_id}")
 async def read_todo(db: db_dependency, todo_id: int = Path(gt = 0)):
