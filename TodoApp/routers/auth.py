@@ -11,13 +11,16 @@ from fastapi.security import OAuth2PasswordRequestForm, OAuth2PasswordBearer
 from datetime import timedelta, datetime, timezone
 from jose import jwt
 
-router = APIRouter()
+router = APIRouter(
+    prefix='/auth',
+    tags = ['auth']
+)
 
 SECRET_KEY = 'bb800b790eb0b65f892583f1bad06048d6cd8e9fb10e0baf2eeb291c80fead2d'
 ALGORITHM = 'HS256'
 
 bcrypt_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
-oath2_bearer = OAuth2PasswordBearer(tokenUrl="token")
+oath2_bearer = OAuth2PasswordBearer(tokenUrl="auth/token")
 class CreateUserRequest(BaseModel):
     username: str
     email: str
