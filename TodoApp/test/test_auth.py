@@ -1,8 +1,9 @@
 from .utils import *
-from routers.auth import ALGORITHM, SECRET_KEY, get_db, authenticate_user, create_access_token
+from routers.auth import ALGORITHM, SECRET_KEY, get_db, authenticate_user, create_access_token, get_current_user
 from fastapi import status
 from jose import jwt
 from datetime import timedelta, datetime, timezone
+import pytest
 
 
 app.dependency_overrides[get_db] = override_get_db
@@ -23,12 +24,20 @@ def test_authenticate_user(test_user):
 def test_create_access_token():
     username = 'testuser'
     user_id = 1
-    role = 'user'
+    user_role = 'user'
     expires_delta = timedelta(days = 1)
     
-    token = create_access_token(username, user_id, role, expires_delta)
+    token = create_access_token(username, user_id, user_role, expires_delta)
     decoded_token = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM], options={"verify_signature": False})
     
     assert decoded_token['sub'] == username
     assert decoded_token['id'] == user_id
-    assert decoded_token['role'] == role
+    assert decoded_token['user_role'] == user_role
+
+@pytest.mark.asyncio 
+async def test_get_current_user_valid_token():
+    encode = {'sub': 'testuser', 'id': 1, 'user_role': 'admin'}
+    token = jwt.encode(encode, SECRET_KEY, algorithm=ALGORITHM)
+    
+    user = await get_current_user(token)
+    assert user == {'username' : 'testuser', 'id' : 1, 'user_role' : 'admin'}
