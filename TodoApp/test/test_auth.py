@@ -1,6 +1,6 @@
 from .utils import *
 from routers.auth import ALGORITHM, SECRET_KEY, get_db, authenticate_user, create_access_token, get_current_user
-from fastapi import status
+from fastapi import status, HTTPException  
 from jose import jwt
 from datetime import timedelta, datetime, timezone
 import pytest
@@ -41,3 +41,14 @@ async def test_get_current_user_valid_token():
     
     user = await get_current_user(token)
     assert user == {'username' : 'testuser', 'id' : 1, 'user_role' : 'admin'}
+    
+@pytest.mark.asyncio
+async def test_get_current_user_missing_payload():
+    encode = {'role' : 'user'}
+    token = jwt.encode(encode, SECRET_KEY, algorithm=ALGORITHM)
+    
+    with pytest.raises(HTTPException) as exc_info:
+        await get_current_user(token)
+    
+    assert exc_info.value.status_code == status.HTTP_401_UNAUTHORIZED
+    assert exc_info.value.detail == "Could not validate credentials"
