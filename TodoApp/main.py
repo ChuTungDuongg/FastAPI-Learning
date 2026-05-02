@@ -10,7 +10,6 @@ models.Base.metadata.create_all(bind=engine)
 
 
 @app.get("/")
-@app.get("/")
 def test(request: Request):
     return templates.TemplateResponse(
         request=request,
