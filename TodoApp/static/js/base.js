@@ -124,6 +124,7 @@
 
     // Login JS
     const loginForm = document.getElementById('loginForm');
+
     if (loginForm) {
         loginForm.addEventListener('submit', async function (event) {
             event.preventDefault();
@@ -136,31 +137,21 @@
                 payload.append(key, value);
             }
 
-            try {
-                const response = await fetch('/auth/token', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/x-www-form-urlencoded'
-                    },
-                    body: payload.toString()
-                });
+            const response = await fetch('/auth/token', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/x-www-form-urlencoded'
+                },
+                body: payload.toString()
+            });
 
-                if (response.ok) {
-                    // Handle success (e.g., redirect to dashboard)
-                    const data = await response.json();
-                    // Delete any cookies available
-                    logout();
-                    // Save token to cookie
-                    document.cookie = `access_token=${data.access_token}; path=/`;
-                    window.location.href = '/todos/todo-page'; // Change this to your desired redirect page
-                } else {
-                    // Handle error
-                    const errorData = await response.json();
-                    alert(`Error: ${errorData.detail}`);
-                }
-            } catch (error) {
-                console.error('Error:', error);
-                alert('An error occurred. Please try again.');
+            if (response.ok) {
+                const data = await response.json();
+                document.cookie = `access_token=${data.access_token}; path=/`;
+                window.location.href = '/todos/todo-page';
+            } else {
+                const errorData = await response.json();
+                alert(`Error: ${errorData.detail}`);
             }
         });
     }
@@ -191,7 +182,7 @@
             };
 
             try {
-                const response = await fetch('/auth', {
+                const response = await fetch('/auth/auth', {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json'
@@ -204,7 +195,7 @@
                 } else {
                     // Handle error
                     const errorData = await response.json();
-                    alert(`Error: ${errorData.message}`);
+                    alert(`Error: ${errorData.detail}`);
                 }
             } catch (error) {
                 console.error('Error:', error);
