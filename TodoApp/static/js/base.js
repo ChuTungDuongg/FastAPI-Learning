@@ -1,3 +1,4 @@
+    console.log("BASE JS VERSION 3 LOADED");
     // Add Todo JS
     const todoForm = document.getElementById('todoForm');
     if (todoForm) {
@@ -12,25 +13,38 @@
                 title: data.title,
                 description: data.description,
                 priority: parseInt(data.priority),
-                complete: false
+                completed: false
             };
 
             try {
-                const response = await fetch('/todos/todo', {
+                const token = getCookie('access_token');
+
+                if (!token) {
+                    alert('Authentication token not found');
+                    window.location.href = '/auth/login-page';
+                    return;
+                }
+
+                const response = await fetch('/todos/todo/', {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
-                        'Authorization': `Bearer ${getCookie('access_token')}`
+                        'Authorization': `Bearer ${token}`
                     },
                     body: JSON.stringify(payload)
                 });
 
                 if (response.ok) {
-                    form.reset(); // Clear the form
+                    window.location.href = '/todos/todo-page';
                 } else {
-                    // Handle error
                     const errorData = await response.json();
-                    alert(`Error: ${errorData.detail}`);
+                    console.error('Add todo error:', errorData);
+
+                    if (Array.isArray(errorData.detail)) {
+                        alert(errorData.detail.map(error => error.msg).join('\n'));
+                    } else {
+                        alert(`Error: ${errorData.detail}`);
+                    }
                 }
             } catch (error) {
                 console.error('Error:', error);
