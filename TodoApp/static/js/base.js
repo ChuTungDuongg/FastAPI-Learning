@@ -55,77 +55,56 @@
 
     // Edit Todo JS
     const editTodoForm = document.getElementById('editTodoForm');
+
     if (editTodoForm) {
         editTodoForm.addEventListener('submit', async function (event) {
-        event.preventDefault();
-        const form = event.target;
-        const formData = new FormData(form);
-        const data = Object.fromEntries(formData.entries());
-        var url = window.location.pathname;
-        const todoId = url.substring(url.lastIndexOf('/') + 1);
+            event.preventDefault();
 
-        const payload = {
-            title: data.title,
-            description: data.description,
-            priority: parseInt(data.priority),
-            complete: data.complete === "on"
-        };
+            const form = event.target;
+            const formData = new FormData(form);
+            const data = Object.fromEntries(formData.entries());
 
-        try {
-            const token = getCookie('access_token');
-            console.log(token)
-            if (!token) {
-                throw new Error('Authentication token not found');
-            }
-
-            console.log(`${todoId}`)
-
-            const response = await fetch(`/todos/todo/${todoId}`, {
-                method: 'PUT',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${token}`
-                },
-                body: JSON.stringify(payload)
-            });
-
-            if (response.ok) {
-                window.location.href = '/todos/todo-page'; // Redirect to the todo page
-            } else {
-                // Handle error
-                const errorData = await response.json();
-                alert(`Error: ${errorData.detail}`);
-            }
-        } catch (error) {
-            console.error('Error:', error);
-            alert('An error occurred. Please try again.');
-        }
-    });
-
-        document.getElementById('deleteButton').addEventListener('click', async function () {
-            var url = window.location.pathname;
+            const url = window.location.pathname;
             const todoId = url.substring(url.lastIndexOf('/') + 1);
+
+            const payload = {
+                title: data.title,
+                description: data.description,
+                priority: parseInt(data.priority),
+                completed: data.completed === 'on'
+            };
+
+            console.log('EDIT TODO PAYLOAD:', payload);
 
             try {
                 const token = getCookie('access_token');
+
                 if (!token) {
-                    throw new Error('Authentication token not found');
+                    alert('Authentication token not found');
+                    window.location.href = '/auth/login-page';
+                    return;
                 }
 
                 const response = await fetch(`/todos/todo/${todoId}`, {
-                    method: 'DELETE',
+                    method: 'PUT',
                     headers: {
+                        'Content-Type': 'application/json',
                         'Authorization': `Bearer ${token}`
-                    }
+                    },
+                    body: JSON.stringify(payload)
                 });
 
                 if (response.ok) {
-                    // Handle success
-                    window.location.href = '/todos/todo-page'; // Redirect to the todo page
+                    window.location.href = '/todos/todo-page';
                 } else {
-                    // Handle error
                     const errorData = await response.json();
-                    alert(`Error: ${errorData.detail}`);
+                    console.error('EDIT TODO ERROR:', errorData);
+
+                    if (Array.isArray(errorData.detail)) {
+                        alert(errorData.detail.map(error => error.msg).join('\n'));
+                    } else {
+                        alert(`Error: ${errorData.detail}`);
+                    }
                 }
             } catch (error) {
                 console.error('Error:', error);
@@ -133,7 +112,47 @@
             }
         });
 
-        
+        const deleteButton = document.getElementById('deleteButton');
+
+        if (deleteButton) {
+            deleteButton.addEventListener('click', async function () {
+                const url = window.location.pathname;
+                const todoId = url.substring(url.lastIndexOf('/') + 1);
+
+                try {
+                    const token = getCookie('access_token');
+
+                    if (!token) {
+                        alert('Authentication token not found');
+                        window.location.href = '/auth/login-page';
+                        return;
+                    }
+
+                    const response = await fetch(`/todos/todo/${todoId}`, {
+                        method: 'DELETE',
+                        headers: {
+                            'Authorization': `Bearer ${token}`
+                        }
+                    });
+
+                    if (response.ok) {
+                        window.location.href = '/todos/todo-page';
+                    } else {
+                        const errorData = await response.json();
+                        console.error('DELETE TODO ERROR:', errorData);
+
+                        if (Array.isArray(errorData.detail)) {
+                            alert(errorData.detail.map(error => error.msg).join('\n'));
+                        } else {
+                            alert(`Error: ${errorData.detail}`);
+                        }
+                    }
+                } catch (error) {
+                    console.error('Error:', error);
+                    alert('An error occurred. Please try again.');
+                }
+            });
+        }
     }
 
     // Login JS

@@ -64,6 +64,46 @@ async def render_todo_page(request: Request, db: db_dependency):
     except Exception as e:
         print("TODO PAGE ERROR:", e)
         return redirect_to_login()
+    
+@router.get("/edit-todo-page/{todo_id}")
+async def render_edit_todo_page(
+    request: Request,
+    todo_id: int,
+    db: db_dependency
+):
+    try:
+        token = request.cookies.get("access_token")
+
+        if token is None:
+            return redirect_to_login()
+
+        user = await get_current_user(token)
+
+        if user is None:
+            return redirect_to_login()
+
+        todo = (
+            db.query(Todos)
+            .filter(Todos.id == todo_id)
+            .filter(Todos.owner_id == user.get("id"))
+            .first()
+        )
+
+        if todo is None:
+            return redirect_to_login()
+
+        return templates.TemplateResponse(
+            request=request,
+            name="edit-todo.html",
+            context={
+                "todo": todo,
+                "user": user
+            }
+        )
+
+    except Exception as e:
+        print("EDIT TODO PAGE ERROR:", e)
+        return redirect_to_login()          
 
 @router.get("/add-todo-page")
 async def render_add_todo_page(request: Request):
